@@ -1,0 +1,8 @@
+{
+  "source": "synthetic; seed 42",
+  "currency": "INR",
+  "raw_rows": 6030,
+  "clean_rows": 6000,
+  "exact_duplicates_removed": 30,
+  "missing_regions_labelled_unknown": 10
+}

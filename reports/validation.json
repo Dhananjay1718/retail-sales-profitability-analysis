@@ -1,0 +1,23 @@
+{
+  "status": "passed",
+  "python": "3.11.16",
+  "pandas": "2.3.3",
+  "numpy": "2.4.6",
+  "plotly": "6.9.0",
+  "xlsxwriter": "3.2.9",
+  "sqlite": "3.45.1",
+  "checks": [
+    "6000 unique orders; 30 duplicates removed; 10 unknown regions",
+    "required fields, positive quantity, discount bounds, foreign keys",
+    "SQL/Pandas grouped financial totals and order counts",
+    "weighted margins, MoM growth, AOV, dense rank, loss order counts",
+    "SQL/Pandas customer segments: counts, orders, revenue and profit",
+    "Excel KPI and regional cached values; source rows; formula and charts"
+  ],
+  "not_validated": [
+    "native Power BI PBIX",
+    "desktop Excel visual rendering",
+    "browser dashboard visual rendering",
+    "notebook execution"
+  ]
+}
