@@ -12,12 +12,12 @@
     "SQL/Pandas grouped financial totals and order counts",
     "weighted margins, MoM growth, AOV, dense rank, loss order counts",
     "SQL/Pandas customer segments: counts, orders, revenue and profit",
-    "Excel KPI and regional cached values; source rows; formula and charts"
+    "Excel KPI, mobile and regional cached values; five charts; merged title and sheet order",
+    "Notebook code cells executed successfully"
   ],
   "not_validated": [
     "native Power BI PBIX",
     "desktop Excel visual rendering",
-    "browser dashboard visual rendering",
-    "notebook execution"
+    "browser dashboard visual rendering"
   ]
 }
