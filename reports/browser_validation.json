@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "viewports": [
+    [
+      1440,
+      1000
+    ],
+    [
+      390,
+      844
+    ]
+  ],
+  "local_links_checked": 28,
+  "checks": [
+    "Full-data and filtered KPI/Pandas agreement",
+    "Plotted product profit agreement",
+    "Region/category/month filters",
+    "Empty selection and reset",
+    "Five charts",
+    "No page errors",
+    "No horizontal overflow at phone width"
+  ],
+  "limits": [
+    "No human visual signoff",
+    "Native Power BI and desktop Excel rendering not tested"
+  ]
+}

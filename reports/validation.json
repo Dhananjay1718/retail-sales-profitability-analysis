@@ -13,11 +13,20 @@
     "weighted margins, MoM growth, AOV, dense rank, loss order counts",
     "SQL/Pandas customer segments: counts, orders, revenue and profit",
     "Excel KPI, mobile and regional cached values; five charts; merged title and sheet order",
-    "Notebook code cells executed successfully"
+    "Notebook code cells executed successfully",
+    "Product-discount SQL/Pandas reconciliation",
+    "90-day eligibility and repeat counts SQL/Pandas reconciliation",
+    "Full-data and filtered KPI/Pandas agreement",
+    "Plotted product profit agreement",
+    "Region/category/month filters",
+    "Empty selection and reset",
+    "Five charts",
+    "No page errors",
+    "No horizontal overflow at phone width"
   ],
   "not_validated": [
-    "native Power BI PBIX",
-    "desktop Excel visual rendering",
-    "browser dashboard visual rendering"
+    "Native Power BI PBIX",
+    "Desktop Excel rendering",
+    "Human visual signoff of browser screenshots"
   ]
 }
