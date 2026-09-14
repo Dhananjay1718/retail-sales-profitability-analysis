@@ -9,8 +9,8 @@ python python/build_project.py
 Pipeline: generate raw data → clean → derive metrics → load SQLite → run SQL →
 reconcile with independent Pandas calculations → export Excel/charts/report → ZIP.
 
-analysis.ipynb is an exploration notebook. Its cells are initially unexecuted;
-the build pipeline, rather than the notebook, performs the automated checks.
+analysis.ipynb covers all five analyses and is executed during the build so
+GitHub displays actual outputs. The pipeline also performs SQL/Pandas and workbook checks.
 Start with read_csv, dtypes, fillna, drop_duplicates, groupby, and vectorized math.
 Then study assertions, pathlib, SQLite, exports and packaging.
 
