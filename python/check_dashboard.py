@@ -65,11 +65,12 @@ with sync_playwright() as pw:
     browser.close()
 
 checked=0
+link_targets=[]
 for md in root.rglob('*.md'):
     if '.git' in md.parts:continue
     for link in re.findall(r'\]\(([^)]+)\)',md.read_text()):
         if '://' in link or link.startswith('#'):continue
-        assert (md.parent/link.split('#')[0]).exists(),(str(md),link)
+        link_targets.append((md.parent/link.split('#')[0],str(md),link))
         checked+=1
 report={'status':'passed','viewports':[[1440,1000],[390,844]],'local_links_checked':checked,
  'checks':['Full-data and filtered KPI/Pandas agreement','Plotted product profit agreement',
@@ -82,6 +83,8 @@ v['not_validated']=['Native Power BI PBIX','Desktop Excel rendering','Human visu
 files=[p for p in sorted(root.rglob('*')) if p.is_file() and not any(s in {'.git','.venv','__pycache__','dist'} for s in p.relative_to(root).parts) and p.name!='manifest.json']
 manifest={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
 (root/'reports/manifest.json').write_text(json.dumps(manifest,indent=2))
+for target,document,link in link_targets:
+    assert target.exists(),(document,link)
 with zipfile.ZipFile(root/'dist/retail-analytics.zip','w',zipfile.ZIP_DEFLATED) as z:
     for p in files+[root/'reports/manifest.json']:z.write(p,str(p.relative_to(root)))
 print(json.dumps(report,indent=2))
