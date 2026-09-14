@@ -53,3 +53,13 @@ Change the loss-product query to show five weakest products.
 Calculate category margins independently.
 Explain why regional profit rank is not a fair measure of sales-team skill.
 Build and check the Power BI report before claiming it is implemented.
+
+## Advanced discussion
+18. Why exclude late customers from a 90-day repeat measure? They lack sufficient
+    observation time. Counting them as non-repeaters biases the denominator.
+19. Why compare discounts within products? Different products have different
+    unit economics. Within-product grouping reduces mix ambiguity but is not causal.
+20. How are dashboard filters checked? Browser tests compare filtered KPI cards
+    and plotted product totals to Pandas, including empty selections and reset.
+21. Why can two repeat rates differ? The dashboard counts >=2 orders in its filter
+    window; the 90-day measure requires full follow-up and a later-date purchase.

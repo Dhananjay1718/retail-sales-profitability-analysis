@@ -17,3 +17,10 @@ Then study assertions, pathlib, SQLite, exports and packaging.
 Exact duplicates are removed. Conflicting duplicate order IDs fail validation.
 Missing regions become Unknown. Negative profit remains as valid business data.
 The script overwrites only its generated output paths on rebuild.
+
+## Modules
+- build_project.py: data cleaning, SQL, Excel, executed notebook and ZIP.
+- portfolio.py: product-discount and 90-day diagnostics, dashboard and business case.
+- check_dashboard.py: browser interaction tests, screenshots, links and file hashes.
+Install requirements-browser.txt and Playwright Chromium for the browser stage.
+GitHub Actions runs both stages before publishing the final package.

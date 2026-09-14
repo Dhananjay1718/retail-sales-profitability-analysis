@@ -6,6 +6,8 @@ on:
       - 'python/**'
       - 'sql/*.sql'
       - 'requirements.txt'
+      - 'requirements-browser.txt'
+      - 'dashboard/**'
       - '.github/workflows/build.yml'
       - '**/README.md'
       - 'docs/**'
@@ -19,7 +21,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -28,8 +30,14 @@ jobs:
           cache: pip
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
+      - name: Install browser test runtime
+        run: |
+          python -m pip install -r requirements-browser.txt
+          python -m playwright install --with-deps chromium
       - name: Build and validate project
         run: python python/build_project.py
+      - name: Validate browser dashboard and package
+        run: python python/check_dashboard.py
       - name: Publish generated project files
         run: |
           git config user.name "github-actions[bot]"

@@ -5,7 +5,7 @@
 **On a phone:** open the **Mobile Summary** tab for large labels and concise
 findings. On a computer, start with **Dashboard**, which opens first.
 
-## What changed
+## Layout
 The dashboard now has a full-width title, taller KPI rows, hidden gridlines,
 formatted values and five vertically stacked charts. Chart axes label INR millions
 where used. Download a fresh copy: an older downloaded workbook will not update.

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Retail Analytics | Dhananjay</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f1f5f6;color:#16333e;font:15px/1.5 system-ui,sans-serif}
+header{padding:40px max(20px,calc((100vw - 1200px)/2));background:#12323c;color:white}header p{max-width:720px;color:#c6dadd}
+.eyebrow{font-size:12px;letter-spacing:2px;color:#84d7c7;text-transform:uppercase}h1{font-size:clamp(27px,4vw,44px);line-height:1.15;margin:15px 0}
+main{max-width:1240px;margin:auto;padding:24px 20px}.filters{display:flex;flex-wrap:wrap;gap:15px;align-items:end;background:white;padding:20px;border-radius:12px}
+label{display:flex;flex:1 1 150px;flex-direction:column;gap:6px;font-weight:600}select,button{min-height:44px;font:inherit;border:1px solid #9bb6be;border-radius:6px;padding:10px;background:white;color:#16333e}
+button{background:#087d80;color:white;cursor:pointer;border:0;padding:12px 20px}select:focus-visible,button:focus-visible{outline:3px solid #dbac43}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:20px 0}.card{background:white;padding:20px;border:1px solid #dae5e8;border-radius:10px}
+.card small{color:#506a76;display:block}.value{display:block;font-size:clamp(20px,2.5vw,30px);font-weight:700;margin:5px 0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.panel{min-width:0;background:white;border:1px solid #dae5e8;border-radius:12px;padding:18px;overflow:hidden}
+.panel h2{font-size:18px;margin:0}.panel p{font-size:13px;color:#506a76;margin:5px 0}.chart{height:330px;min-width:0;width:100%}.wide{grid-column:1/-1}
+.notice{background:#e0f0ec;border-left:4px solid #087d80;padding:15px 20px;margin:20px 0}#status,footer{color:#506a76}footer{padding:25px 0;font-size:13px}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:12px}.value{font-size:20px}main{padding:15px 12px}.filters,.panel{padding:12px}header{padding:24px 16px}}
+</style><script>__PLOTLY__</script></head><body>
+<header><span class="eyebrow">Dhananjay · Data analyst portfolio</span><h1>Retail sales &amp; profitability</h1>
+<p>Investigate sales growth, pricing, repeat buying and regional performance using a reconciled retail dataset.</p><span class="eyebrow">Synthetic case study · 2025 · INR</span></header>
+<main><div class="filters"><label>Region<select id="region"><option value="">All regions</option></select></label><label>Category<select id="category"><option value="">All categories</option></select></label><label>Month<select id="month"><option value="">Full year</option></select></label><button id="reset">Reset filters</button></div>
+<p id="status" role="status" aria-live="polite"></p><div class="kpis">
+<div class="card"><small>Revenue · INR</small><span class="value" id="revenue"></span><small>After discounts</small></div>
+<div class="card"><small>Contribution profit · INR</small><span class="value" id="profit"></span><small>After product and shipping costs</small></div>
+<div class="card"><small>Weighted margin</small><span class="value" id="margin"></span><small>Total profit / total revenue</small></div>
+<div class="card"><small>Orders</small><span class="value" id="orders"></span><small>One product per order</small></div>
+<div class="card"><small>Average order value · INR</small><span class="value" id="aov"></span><small>Revenue / orders</small></div>
+<div class="card"><small>Repeat customer rate</small><span class="value" id="repeat"></span><small>At least two orders within filters</small></div></div>
+<div class="notice" id="insight"></div><div class="grid">
+<section class="panel wide"><h2>01 / Revenue over time</h2><p>Monthly revenue in INR. One year does not establish recurring seasonality.</p><div id="trend" class="chart"></div></section>
+<section class="panel"><h2>02 / Product profitability</h2><p>Contribution profit in INR. Low profit is not necessarily a loss.</p><div id="products" class="chart"></div></section>
+<section class="panel"><h2>03 / Discount economics</h2><p>Weighted margin in %. Product mix and demand response matter.</p><div id="discounts" class="chart"></div></section>
+<section class="panel"><h2>04 / Repeat buying</h2><p>Customer counts within selected filters, not cohort retention.</p><div id="customers" class="chart"></div></section>
+<section class="panel"><h2>05 / Regional contribution</h2><p>Profit in INR. Unknown regions remain in the totals.</p><div id="regions" class="chart"></div></section>
+</div><footer>Seeded synthetic data: 6,000 orders. No returns, tax, marketing or fixed overhead. Recommendations are untested hypotheses. Filters update every panel. The file contains its dataset and plotting library and works offline.</footer></main>
+<script>
+const DATA=__DATA__, el=id=>document.getElementById(id), keys=['region','category','month'];
+const fmt=new Intl.NumberFormat('en-IN',{maximumFractionDigits:2});
+for(const key of keys){for(const val of [...new Set(DATA.map(d=>d[key]))].sort()){const opt=document.createElement('option');opt.value=val;opt.textContent=val;el(key).appendChild(opt);}el(key).onchange=render;}
+el('reset').onclick=()=>{keys.forEach(k=>el(k).value='');render();};
+function group(rows,key){const out={};for(const d of rows){const x=out[d[key]]||(out[d[key]]={revenue:0,profit:0,orders:0});x.revenue+=d.revenue;x.profit+=d.profit;x.orders++;}return out;}
+function chart(id,names,values,horizontal=false,line=false){return Plotly.react(id,[{x:horizontal?values:names,y:horizontal?names:values,type:line?'scatter':'bar',orientation:horizontal?'h':'v',mode:line?'lines+markers':undefined,marker:{color:line?'#087d80':values.map(v=>v<0?'#bb4e43':'#087d80')},line:{color:'#087d80',width:3}}],{height:310,autosize:true,margin:{l:horizontal?110:65,r:15,t:15,b:70},font:{family:'system-ui,sans-serif',size:11,color:'#405f6c'},xaxis:{automargin:true,gridcolor:'#e1eaed'},yaxis:{automargin:true,gridcolor:'#e1eaed'},showlegend:false},{responsive:true,displayModeBar:false});}
+async function render(){
+const rows=DATA.filter(d=>keys.every(k=>!el(k).value||d[k]===el(k).value));
+const revenue=rows.reduce((s,d)=>s+d.revenue,0),profit=rows.reduce((s,d)=>s+d.profit,0),cs=Object.values(group(rows,'customer_id')),repeats=cs.filter(d=>d.orders>=2).length;
+window.currentMetrics={revenue,profit,orders:rows.length,margin:revenue?profit/revenue:null,aov:rows.length?revenue/rows.length:null,repeat:cs.length?repeats/cs.length:null};
+for(const k of ['revenue','profit','orders','aov'])el(k).textContent=currentMetrics[k]===null?'—':fmt.format(currentMetrics[k]);
+for(const k of ['margin','repeat'])el(k).textContent=currentMetrics[k]===null?'—':(100*currentMetrics[k]).toFixed(1)+'%';
+el('status').textContent=fmt.format(rows.length)+' orders · '+fmt.format(cs.length)+' observed customers · filters apply to all panels';
+el('insight').textContent=rows.length?rows.filter(d=>d.profit<0).length.toLocaleString()+' selected orders have negative contribution profit. Inspect pricing and shipping costs before proposing a discount change.':'No orders match these filters. Reset filters to restore the full dataset.';
+const m=group(rows,'month'),months=Object.keys(m).sort(),p=group(rows,'product'),products=Object.keys(p).sort((a,b)=>p[a].profit-p[b].profit),d=group(rows,'discount_band'),bands=['None','Low (1-10%)','High (>10%)'].filter(b=>d[b]),r=group(rows,'region'),regions=Object.keys(r).sort((a,b)=>r[a].profit-r[b].profit);
+await Promise.all([chart('trend',months,months.map(x=>m[x].revenue),false,true),chart('products',products,products.map(x=>p[x].profit),true),chart('discounts',bands,bands.map(x=>100*d[x].profit/d[x].revenue)),chart('customers',['One-time','Repeat'],[cs.length-repeats,repeats]),chart('regions',regions,regions.map(x=>r[x].profit),true)]);window.renderVersion=(window.renderVersion||0)+1;
+}render();
+</script></body></html>

@@ -9,7 +9,6 @@ import zipfile
 import numpy as np
 import pandas as pd
 import plotly
-import plotly.express as px
 import xlsxwriter
 import openpyxl
 import nbformat
@@ -319,68 +318,6 @@ assert wf["Dashboard"].sheet_view.showGridLines is False
 assert wf["Mobile Summary"]["B4"].data_type=="f"
 wf.close()
 
-# Embedded charts work offline; no shared cross-filtering.
-figures = [
-    px.line(monthly,x="month",y="revenue",markers=True,title="1. Monthly revenue (INR)"),
-    px.bar(products,x="product",y="profit",color="category",title="2. Product profit (INR)"),
-    px.bar(discounts,x="discount_band",y="margin_pct",title="3. Discount-band margin (%)"),
-    px.bar(segments,x="segment",y="customers",title="4. Customers by purchase frequency"),
-    px.bar(regions,x="region",y="profit",title="5. Regional profit (INR)")
-]
-plots = []
-for i,fig in enumerate(figures):
-    fig.update_layout(template="plotly_white",margin=dict(t=65,b=70))
-    plots.append(fig.to_html(full_html=False,include_plotlyjs=(i==0)))
-write("dashboard/dashboard.html", f"""<!doctype html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Retail Analytics</title><style>
-body{{font-family:Arial,sans-serif;margin:auto;max-width:1200px;padding:24px;
-background:#eef3f8;color:#16324f}}
-section{{background:white;padding:18px;border-radius:12px;margin:18px 0}}
-.kpis{{display:flex;gap:30px;flex-wrap:wrap}}
-</style></head><body><h1>Retail Sales &amp; Profitability</h1>
-<p>Synthetic portfolio case | 2025 | INR | 6,000 orders</p>
-<section class="kpis"><div>Revenue<br><b>INR {revenue:,.2f}</b></div>
-<div>Profit<br><b>INR {profit:,.2f}</b></div>
-<div>Margin<br><b>{profit/revenue:.1%}</b></div>
-<div>Repeat rate<br><b>{repeat:.1%}</b></div></section>
-<p>Hover and zoom to explore. Legend entries can be toggled. Charts do not share filters.</p>
-{''.join('<section>'+p+'</section>' for p in plots)}
-<p>Illustrative contribution profit excludes returns, tax, ads and fixed overhead.
-Descriptive results; no real business impact or causal effects are claimed.</p>
-</body></html>""")
-
-# A lightweight exact SVG preview renders directly in the repository README.
-svg = ['<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="650" viewBox="0 0 1100 650">',
-       '<rect width="1100" height="650" fill="#eef3f8"/>']
-def txt(x,y,s,size=18,color="#16324f"):
-    svg.append(f'<text x="{x}" y="{y}" font-family="Arial,sans-serif" '
-               f'font-size="{size}" fill="{color}">{html.escape(str(s))}</text>')
-txt(35,45,"RETAIL SALES & PROFITABILITY",27)
-txt(35,76,"Synthetic portfolio data | 2025 | Currency INR",16)
-for x,label,value in [
-    (35,"Revenue",f"{revenue:,.0f}"), (310,"Profit",f"{profit:,.0f}"),
-    (585,"Profit margin",f"{profit/revenue:.1%}"), (860,"Repeat rate",f"{repeat:.1%}")
-]:
-    txt(x,125,label,16)
-    txt(x,165,value,25)
-txt(35,220,"Monthly revenue (INR millions)",20)
-maxv=monthly["revenue"].max()
-for i,item in monthly.iterrows():
-    x=45+i*83
-    height=float(item["revenue"])/maxv*160
-    svg.append(f'<rect x="{x}" y="{410-height:.1f}" width="48" height="{height:.1f}" fill="#197d92"/>')
-    txt(x,433,item["month"][5:],14)
-    txt(x,400-height,f'{item["revenue"]/1e6:.1f}',13)
-txt(35,487,"Regional profit (INR millions)",20)
-for i,item in regions.iterrows():
-    txt(35+i*210,525,item["region"],16)
-    txt(35+i*210,557,f'{item["profit"]/1e6:.2f}',24)
-txt(35,612,"Profit excludes overhead, tax, returns and advertising. No real business impact claimed.",14)
-svg.append("</svg>")
-write("reports/dashboard_preview.svg","\n".join(svg))
-
 peak=monthly.loc[monthly["revenue"].idxmax()]
 worst=products.iloc[0]
 low=discounts.iloc[0]
@@ -483,6 +420,9 @@ write("reports/validation.json",json.dumps({
     "not_validated":["native Power BI PBIX", "desktop Excel visual rendering",
                      "browser dashboard visual rendering"]
 },indent=2))
+from portfolio import build_portfolio
+build_portfolio(ROOT, clean, results)
+
 archive=ROOT/"dist/retail-analytics.zip"
 with zipfile.ZipFile(archive,"w",zipfile.ZIP_DEFLATED) as z:
     for path in sorted(ROOT.rglob("*")):
