@@ -1,0 +1,29 @@
+-- Add each measure separately to the imported table named Orders.
+Revenue = SUM(Orders[revenue])
+
+Profit = SUM(Orders[profit])
+
+Order Count = DISTINCTCOUNT(Orders[order_id])
+
+Profit Margin = DIVIDE([Profit], [Revenue])
+
+Average Order Value = DIVIDE([Revenue], [Order Count])
+
+Customer Count = DISTINCTCOUNT(Orders[customer_id])
+
+Repeat Customers =
+COUNTROWS(
+ FILTER(VALUES(Orders[customer_id]),
+  CALCULATE(DISTINCTCOUNT(Orders[order_id])) >= 2)
+)
+
+Repeat Customer Rate = DIVIDE([Repeat Customers], [Customer Count])
+
+Loss Order Count = CALCULATE([Order Count], Orders[profit] < 0)
+
+-- These two require the Calendar table and relationship described in README.
+Previous Month Revenue =
+CALCULATE([Revenue], DATEADD('Calendar'[Date], -1, MONTH))
+
+MoM Growth =
+DIVIDE([Revenue] - [Previous Month Revenue], [Previous Month Revenue])

@@ -1,0 +1,8 @@
+-- Modeling > New table. Then relate Calendar[Date] to Orders[order_date].
+Calendar =
+ADDCOLUMNS(
+ CALENDAR(DATE(2025,1,1), DATE(2025,12,31)),
+ "Month", FORMAT([Date], "yyyy-MM"),
+ "Year", YEAR([Date]),
+ "Month Number", MONTH([Date])
+)
