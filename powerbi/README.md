@@ -1,5 +1,10 @@
 # Power BI
 
+This page is a setup guide, not a report viewer.
+
+For an existing dashboard, [download the Excel workbook](https://raw.githubusercontent.com/Dhananjay1718/retail-sales-profitability-analysis/main/excel/retail_analysis.xlsx)
+or [download the browser dashboard](https://raw.githubusercontent.com/Dhananjay1718/retail-sales-profitability-analysis/main/dashboard/dashboard.html).
+
 **Deliverable status: import-ready data, DAX and build instructions. No native
 PBIX has been created or visually validated.** The HTML dashboard is separate.
 

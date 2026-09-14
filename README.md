@@ -14,6 +14,19 @@ An AI-assisted educational portfolio project for Dhananjay, using **6,000 synthe
 | Do customers return? | Repeat customer rate and customer segments | Design a second-purchase campaign |
 | Which regions need attention? | Revenue, profit, margin, AOV and ranking | Compare volume and unit economics |
 
+## View or download
+
+| What you want | Open this | Status |
+|---|---|---|
+| Excel dashboard | [Download workbook](https://raw.githubusercontent.com/Dhananjay1718/retail-sales-profitability-analysis/main/excel/retail_analysis.xlsx) | Built; Dashboard and Mobile Summary tabs |
+| Interactive browser charts | [Download HTML](https://raw.githubusercontent.com/Dhananjay1718/retail-sales-profitability-analysis/main/dashboard/dashboard.html) | Built; open the downloaded file in a browser |
+| All files | [Download ZIP](https://raw.githubusercontent.com/Dhananjay1718/retail-sales-profitability-analysis/main/dist/retail-analytics.zip) | Built; extract before opening files |
+| Native Power BI report | [Setup guide](powerbi/README.md) | Not built; DAX and data supplied |
+
+The image below is a static Python-generated preview. GitHub displays HTML source,
+not the running dashboard. On a phone, the workbook's Mobile Summary tab is the
+most compact view. Previously downloaded files do not update: download again.
+
 ## Open the project
 
 - [Executive summary](reports/executive_summary.md) — computed findings and recommendations.

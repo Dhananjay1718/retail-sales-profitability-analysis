@@ -1,19 +1,29 @@
-# Excel
+# Excel dashboard
 
-Open retail_analysis.xlsx and select Dashboard.
-Download the file first; GitHub does not execute Excel formulas.
+[Download the latest workbook](https://raw.githubusercontent.com/Dhananjay1718/retail-sales-profitability-analysis/main/excel/retail_analysis.xlsx).
 
-- Orders: formatted data table with filters and conditional profit formatting.
-- Dashboard: SUM, COUNTA, IFERROR, KPI cards and two charts.
-- Customers: COUNTIF measures orders per customer.
-- Region_Formulas: SUMIFS computes region revenue/profit and IFERROR computes margin.
-- Numbered summary sheets: SQL result snapshots.
+**On a phone:** open the **Mobile Summary** tab for large labels and concise
+findings. On a computer, start with **Dashboard**, which opens first.
 
-Cached formula results are included and verified by the build with openpyxl.
-This verifies the stored values and formula presence, not Excel's calculation
-engine or visual layout. Recalculate and inspect in desktop Excel before presenting.
+## What changed
+The dashboard now has a full-width title, taller KPI rows, hidden gridlines,
+formatted values and five vertically stacked charts. Chart axes label INR millions
+where used. Download a fresh copy: an older downloaded workbook will not update.
 
-Customer and region lists reflect the built dataset. Rebuild after replacing data.
-The numbered sheets and monthly chart are build-time snapshots.
-Practice: create a PivotTable from Orders with category in Rows and revenue/profit
-in Values; compare totals to SQL. No native PivotTable is prebuilt.
+## Sheets
+- Dashboard: six formula KPIs and charts for all five business questions.
+- Mobile Summary: compact formula KPIs and five findings for phone viewing.
+- Orders: formatted source table, filters and profit conditional formatting.
+- Customers: COUNTIF calculates orders per customer.
+- Region_Formulas: SUMIFS revenue/profit and weighted margin.
+- Numbered sheets: SQL output snapshots.
+
+SUM, COUNTA, COUNTIF, SUMIFS and IFERROR are used. Cached formula results let
+previewers display the initial calculations. The build verifies these values,
+the merged title, sheet order and five charts. Desktop Excel and mobile viewers
+can render differently; visual rendering is not tested automatically.
+
+Rebuild after changing the input data: summary snapshots, customer lists and
+chart source ranges reflect the generated dataset. This is not a live dashboard.
+Practice: build a PivotTable from Orders by category and compare its sums with
+SQL. A native PivotTable is not prebuilt.

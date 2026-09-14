@@ -13,6 +13,7 @@ import plotly.express as px
 import xlsxwriter
 import openpyxl
 import nbformat
+from nbclient import NotebookClient
 
 ROOT = Path(__file__).resolve().parents[1]
 for folder in ("data", "reports", "excel", "dashboard", "dist", "sql"):
@@ -134,12 +135,19 @@ expected_segments = customer.groupby("segment").agg(
 np.testing.assert_allclose(
     segments.set_index("segment").sort_index()[["customers","orders","revenue","profit"]],
     expected_segments.sort_index()[["customers","orders","revenue","profit"]])
+loss_expected = clean.groupby("product")["profit"].sum()
+loss_expected = loss_expected[loss_expected.lt(0)].sort_index()
+loss_actual = results["06_loss_making_products"].set_index("product")["total_profit"].sort_index()
+assert loss_expected.index.tolist() == loss_actual.index.tolist()
+np.testing.assert_allclose(loss_expected,loss_actual,atol=.01)
 revenue = float(clean["revenue"].sum())
 profit = float(clean["profit"].sum())
 repeat = float(customer["orders"].ge(2).mean())
 
-# Excel includes cached formula values, two charts and source/summary tables.
+# Excel: five business charts, readable merged headers and a compact phone summary.
 with pd.ExcelWriter(ROOT / "excel/retail_analysis.xlsx", engine="xlsxwriter") as writer:
+    dash = writer.book.add_worksheet("Dashboard")
+    mobile = writer.book.add_worksheet("Mobile Summary")
     clean.to_excel(writer, sheet_name="Orders", index=False)
     for key, result in results.items():
         result.to_excel(writer, sheet_name=key[:31], index=False)
@@ -154,12 +162,32 @@ with pd.ExcelWriter(ROOT / "excel/retail_analysis.xlsx", engine="xlsxwriter") as
         "columns":[{"header":c} for c in clean.columns]})
     pc = clean.columns.get_loc("profit")
     source.conditional_format(1,pc,len(clean),pc,{"type":"3_color_scale"})
-    dash = book.add_worksheet("Dashboard")
+    # Dashboard was created first so it opens before the data sheets.
     dash.activate()
-    dash.set_column("A:A",29)
-    dash.set_column("B:B",22)
-    dash.write("A1","Retail Analytics | 2025",title)
-    dash.write("A2","Synthetic data | INR | one row per order")
+    dash.hide_gridlines(2)
+    dash.set_zoom(90)
+    dash.set_column("A:A",28)
+    dash.set_column("B:H",10)
+    for row in range(94):
+        dash.set_row(row,20)
+    title = book.add_format({"font_size":22,"bold":True,"font_color":"white",
+        "bg_color":"#16324F","valign":"vcenter"})
+    subtitle = book.add_format({"font_size":11,"font_color":"#52667A","valign":"vcenter"})
+    label_fmt = book.add_format({"font_size":12,"bold":True,"font_color":"#16324F",
+        "bg_color":"#EDF4F8","valign":"vcenter"})
+    note_fmt = book.add_format({"font_size":11,"text_wrap":True,
+        "font_color":"#52667A","valign":"vcenter"})
+    dash.merge_range("A1:H2","RETAIL ANALYTICS | 2025",title)
+    dash.merge_range("A3:H3","Synthetic portfolio data | INR | 6,000 orders",subtitle)
+    dash.merge_range("E4:H9",
+        "Five business questions\n\nScroll down for all five charts.\n"
+        "On a phone, open Mobile Summary for a compact overview.",note_fmt)
+    dash.merge_range("A11:H11","FINANCIALS ARE INR; CHART AXES USE MILLIONS WHERE LABELLED",subtitle)
+    dash.freeze_panes(3,0)
+    dash.set_landscape()
+    dash.set_paper(9)
+    dash.fit_to_pages(1,0)
+    dash.print_area("A1:H93")
     end = len(customer)+1
     metrics = [
         ("Revenue","=SUM(Orders[revenue])",revenue,money),
@@ -171,8 +199,13 @@ with pd.ExcelWriter(ROOT / "excel/retail_analysis.xlsx", engine="xlsxwriter") as
          f'=IFERROR(COUNTIF(Customers!B2:B{end},">=2")/COUNTA(Customers!A2:A{end}),0)',
          repeat,pct)]
     for row,(label,formula,value,fmt) in enumerate(metrics,start=3):
-        dash.write(row,0,label)
-        dash.write_formula(row,1,formula,fmt,float(value))
+        dash.set_row(row,30)
+        dash.write(row,0,label,label_fmt)
+        value_format = book.add_format({"font_size":18,"bold":True,
+            "font_color":"#12788B","bg_color":"#EDF4F8","valign":"vcenter",
+            "num_format": "0.0%" if fmt is pct else ("#,##0" if fmt is None else "#,##0.00")})
+        dash.merge_range(row,1,row,3,"",value_format)
+        dash.write_formula(row,1,formula,value_format,float(value))
     customers = book.add_worksheet("Customers")
     customers.write_row(0,0,["customer_id","orders"],header)
     for row,(cid,item) in enumerate(customer.iterrows(),start=1):
@@ -189,19 +222,77 @@ with pd.ExcelWriter(ROOT / "excel/retail_analysis.xlsx", engine="xlsxwriter") as
                 f'=SUMIFS(Orders[{field}],Orders[region],A{erow})',money,item[field])
         region_sheet.write_formula(row,3,f'=IFERROR(C{erow}/B{erow},0)',
             pct,item["margin_pct"]/100)
-    for ctype,sheet,xcol,ycol,length,position,label in [
-        ("line","01_monthly_growth",0,2,len(monthly),"D4","Monthly revenue (INR)"),
-        ("column","Region_Formulas",0,2,len(regions),"D20","Regional profit (INR)")
-    ]:
+    chart_specs = [
+        ("line","01_monthly_growth",0,2,len(monthly),"A13","1. Monthly revenue","INR millions"),
+        ("bar","02_product_profitability",1,4,len(products),"A29","2. Product profit","INR millions"),
+        ("column","03_discount_impact",0,5,len(discounts),"A45","3. Margin by discount band","Percent"),
+        ("column","04_customer_segments",0,1,len(segments),"A61","4. Repeat and one-time customers","Customers"),
+        ("bar","Region_Formulas",0,2,len(regions),"A77","5. Regional profit","INR millions")
+    ]
+    for ctype,sheet,xcol,ycol,length,position,label,unit in chart_specs:
         chart = book.add_chart({"type":ctype})
-        chart.add_series({"name":label,"categories":[sheet,1,xcol,length,xcol],
-                          "values":[sheet,1,ycol,length,ycol]})
-        chart.set_title({"name":label})
+        series = {"name":label,"categories":[sheet,1,xcol,length,xcol],
+                  "values":[sheet,1,ycol,length,ycol]}
+        if ctype=="line":
+            series["line"]={"color":"#12788B","width":2.5}
+            series["marker"]={"type":"circle","size":5}
+        else:
+            series["fill"]={"color":"#12788B"}
+            series["border"]={"none":True}
+        chart.add_series(series)
+        chart.set_title({"name":label,"name_font":{"size":15,"color":"#16324F"}})
+        chart.set_legend({"none":True})
+        chart.set_size({"width":695,"height":290})
+        chart.set_chartarea({"border":{"none":True},"fill":{"color":"#FFFFFF"}})
+        number_axis={"name":unit,"num_font":{"size":10},
+                     "num_format": '0.0,,"M"' if unit=="INR millions" else "0.0"}
+        if ctype=="bar":
+            chart.set_x_axis(number_axis)
+            chart.set_y_axis({"num_font":{"size":11}})
+        else:
+            chart.set_y_axis(number_axis)
+            chart.set_x_axis({"num_font":{"size":10},"label_position":"low"})
         dash.insert_chart(position,chart)
+
+    # Mobile Summary was created second.
+    mobile.hide_gridlines(2)
+    mobile.set_column("A:A",25)
+    mobile.set_column("B:B",22)
+    mobile.set_zoom(100)
+    mobile.set_row(0,35)
+    mobile.merge_range("A1:B1","RETAIL | 2025",title)
+    mobile.set_row(1,26)
+    mobile.merge_range("A2:B2","Synthetic data | INR",subtitle)
+    for row,(label,formula,value,fmt) in enumerate(metrics,start=3):
+        mobile.set_row(row,32)
+        mobile.write(row,0,label,label_fmt)
+        mobile.write_formula(row,1,f"=Dashboard!B{row+1}",fmt,float(value))
+    notes=[
+        ("1. Sales trend",f"Peak month: {monthly.loc[monthly['revenue'].idxmax(),'month']}."),
+        ("2. Product profitability",f"Lowest total profit: {products.iloc[0]['product']}. "
+         f"Negative-profit products: {len(results['06_loss_making_products'])}."),
+        ("3. Discounts",f"Lowest-margin band: {discounts.iloc[0]['discount_band']} "
+         f"({discounts.iloc[0]['margin_pct']:.2f}%)."),
+        ("4. Repeat buying",f"{int(customer['orders'].ge(2).sum()):,} of "
+         f"{len(customer):,} customers bought at least twice."),
+        ("5. Regions",f"Highest total profit: {regions.iloc[0]['region']}. "
+         "Compare margin and volume before taking action."),
+        ("Scope","Contribution profit excludes overhead, tax, returns and ads. "
+         "These synthetic results are not real business outcomes.")
+    ]
+    for i,(label,note) in enumerate(notes):
+        row=11+i*3
+        mobile.set_row(row,24)
+        mobile.merge_range(row,0,row,1,label,label_fmt)
+        mobile.set_row(row+1,50)
+        mobile.merge_range(row+1,0,row+1,1,note,note_fmt)
+    mobile.print_area("A1:B29")
+    mobile.fit_to_pages(1,1)
     for sheet in writer.sheets.values():
-        if sheet.name!="Dashboard":
+        if sheet.name not in {"Dashboard","Mobile Summary"}:
             sheet.freeze_panes(1,0)
             sheet.set_column(0,20,19)
+
 
 # Validate workbook structures and stored formula results; not Excel rendering.
 wb = openpyxl.load_workbook(ROOT / "excel/retail_analysis.xlsx",data_only=True)
@@ -213,10 +304,18 @@ for row,item in enumerate(regions.to_dict("records"),start=2):
         [wb["Region_Formulas"].cell(row,c).value for c in [2,3,4]],
         [item["revenue"],item["profit"],item["margin_pct"]/100])
 assert wb["Orders"].max_row==6001
+np.testing.assert_allclose(
+    [wb["Mobile Summary"][f"B{i}"].value for i in range(4,10)],
+    [revenue,profit,profit/revenue,len(clean),revenue/len(clean),repeat])
 wb.close()
 wf = openpyxl.load_workbook(ROOT / "excel/retail_analysis.xlsx",data_only=False)
 assert wf["Dashboard"]["B4"].data_type=="f"
-assert len(wf["Dashboard"]._charts)==2
+assert len(wf["Dashboard"]._charts)==5
+assert "A1:H2" in {str(r) for r in wf["Dashboard"].merged_cells.ranges}
+assert wf["Dashboard"].row_dimensions[1].height >= 20
+assert wf.sheetnames[:2] == ["Dashboard","Mobile Summary"]
+assert wf["Dashboard"].sheet_view.showGridLines is False
+assert wf["Mobile Summary"]["B4"].data_type=="f"
 wf.close()
 
 # Embedded charts work offline; no shared cross-filtering.
@@ -329,7 +428,7 @@ fixed overhead. Synthetic patterns cannot justify real market decisions.
 Recommendations are untested hypotheses. No percentage improvement is claimed.
 """)
 
-# A portable notebook uses committed data; code cells remain explicitly unexecuted.
+# Execute the portable notebook so GitHub shows actual analysis outputs.
 nb = nbformat.v4.new_notebook()
 nb.cells = [
     nbformat.v4.new_markdown_cell(
@@ -346,9 +445,24 @@ nb.cells = [
         "c=df.groupby('customer_id')['order_id'].nunique()\n"
         "print('Repeat customer rate:',c.ge(2).mean())"),
     nbformat.v4.new_markdown_cell(
-        "Exercises: recreate discount and region SQL outputs using Pandas. "
+        "Exercises: compare the discount and region outputs below with their SQL CSV files. "
         "Explain why discount comparisons are not causal evidence.")
 ]
+nb.cells.extend([
+    nbformat.v4.new_markdown_cell("## Discount analysis"),
+    nbformat.v4.new_code_cell(
+        "d=df.groupby('discount_band')[['revenue','profit']].sum()\n"
+        "d['margin_pct']=100*d['profit']/d['revenue']\nd"),
+    nbformat.v4.new_markdown_cell("## Regional analysis"),
+    nbformat.v4.new_code_cell(
+        "r=df.groupby('region').agg(revenue=('revenue','sum'),"
+        "profit=('profit','sum'),orders=('order_id','count'))\n"
+        "r['margin_pct']=100*r['profit']/r['revenue']\n"
+        "r['aov']=r['revenue']/r['orders']\nr.sort_values('profit',ascending=False)")
+])
+nb.metadata["kernelspec"]={"display_name":"Python 3","language":"python","name":"python3"}
+NotebookClient(nb,timeout=120,kernel_name="python3",
+    resources={"metadata":{"path":str(ROOT)}}).execute()
 nbformat.write(nb, ROOT / "python/analysis.ipynb")
 
 write("reports/validation.json",json.dumps({
@@ -362,10 +476,11 @@ write("reports/validation.json",json.dumps({
         "SQL/Pandas grouped financial totals and order counts",
         "weighted margins, MoM growth, AOV, dense rank, loss order counts",
         "SQL/Pandas customer segments: counts, orders, revenue and profit",
-        "Excel KPI and regional cached values; source rows; formula and charts"
+        "Excel KPI, mobile and regional cached values; five charts; merged title and sheet order",
+        "Notebook code cells executed successfully"
     ],
     "not_validated":["native Power BI PBIX", "desktop Excel visual rendering",
-                     "browser dashboard visual rendering", "notebook execution"]
+                     "browser dashboard visual rendering"]
 },indent=2))
 archive=ROOT/"dist/retail-analytics.zip"
 with zipfile.ZipFile(archive,"w",zipfile.ZIP_DEFLATED) as z:
